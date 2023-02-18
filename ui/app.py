@@ -127,7 +127,7 @@ class HandcraftedAudioPlayerApp(App):
         self.__player.set_playlist(playlist)
         self.__current_playlist_data_table: DataTable = DataTable(zebra_stripes=True)
         self.__current_playlist_data_table.cursor_type = "row" 
-        self._current_track_controls = CurrentTrackWidget(id="current_track_controls")
+        self.__current_track_controls = CurrentTrackWidget(id="current_track_controls")
         self.__previous_track_index : int = 0
         return super().__init__(*args, **kwargs)
 
@@ -135,7 +135,7 @@ class HandcraftedAudioPlayerApp(App):
         yield Header(show_clock=True)
         yield Vertical(
             self.__current_playlist_data_table,
-            self._current_track_controls
+            self.__current_track_controls
         )
         yield Footer()
 
