@@ -38,7 +38,7 @@ class DeviceItem(ListItem):
     
     def compose(self) -> ComposeResult:
         player : HandcraftedAudioPlayer = self.app.player
-        if player.current_device_info and player.current_device_info.index == self.device.index:
+        if player.current_device and player.current_device.index == self.device.index:
             self.add_class("selected")
         if self.device.is_default_output_device:
             yield Label("*", id="device_info_default_device")
@@ -94,6 +94,7 @@ class SelectOutputDeviceDialog(Static):
         button = event.button
         if button.id == "select_output_device_ok":
             if self.__selected_device != None:
+                self.app.player.stop()
                 self.app.player.set_output_device(self.__selected_device)
                 self.app.pop_screen()
         elif button.id == "select_output_device_cancel":
@@ -166,8 +167,9 @@ class HandcraftedAudioPlayerApp(App):
         await self.__player.play(selected_row.cursor_row)
 
     def __on_track_changed(self, *_):
-        self.__current_playlist_data_table.update_cell_at(Coordinate(self.__previous_track_index, 0), "", update_width=True)
+        self.__current_playlist_data_table.update_cell_at(Coordinate(self.__previous_track_index, 0), " ", update_width=True)
         self.__current_playlist_data_table.update_cell_at(Coordinate(self.__player.current_track_index, 0), "", update_width=True)
+        self.__current_playlist_data_table._highlight_row(self.__player.current_track_index)
         self.__previous_track_index = self.__player.current_track_index
 
     def on_mount(self) -> None:
@@ -177,6 +179,3 @@ class HandcraftedAudioPlayerApp(App):
             for file in self.__player.current_playlist:
                 t = time.gmtime(file.duration)
                 self.__current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
-
-
-

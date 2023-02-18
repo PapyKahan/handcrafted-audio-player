@@ -70,6 +70,7 @@ class OutputDevice:
         self.__buffer_worker: threading.Thread | None = None
         self.__buffer: numpy.ndarray
         self.__current_buffer_read_position : int = 0
+        self.__device_is_streaming = False
     
     def __initialize_playback(self, filepath: str):
         self.configuration = OutputDeviceConfiguration(filename=filepath, device=self, max_sample_rate=self.__device_max_samplerate)
@@ -161,6 +162,7 @@ class OutputDevice:
             self.__current_buffer_read_position+=frames
 
             if self.__current_buffer_read_position >= len(self.__buffer):
+                self.__device_is_streaming = False
                 raise sounddevice.CallbackStop()
 
         self.__output_stream = sounddevice.OutputStream(
@@ -176,12 +178,12 @@ class OutputDevice:
             )
         self.__start_streaming_event.wait()
         self.__output_stream.start()
-        self.__output_stream.active
+        self.__device_is_streaming = True
 
     @property
     def is_playing(self) -> bool:
         if self.__output_stream:
-            return self.__output_stream.active
+            return self.__device_is_streaming
         return False
 
     def stop(self) -> None:
@@ -189,6 +191,7 @@ class OutputDevice:
             self.__output_stream.stop(ignore_errors=True)
             self.__output_stream.close(ignore_errors=True)
             self.__output_stream = None
+            self.__device_is_streaming = False
 
     def pause(self):
         if self.__output_stream:

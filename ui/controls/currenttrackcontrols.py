@@ -73,6 +73,8 @@ class TrackControls(Static):
                 await self.app.player.play()
             else:
                 self.app.player.resume()
+                self.query_one("#pause_track").toggle_class("hidden")
+                self.query_one("#play_track").toggle_class("hidden")
         elif button.id == "pause_track":
             self.app.player.pause()
             self.query_one("#pause_track").toggle_class("hidden")

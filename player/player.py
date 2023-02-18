@@ -102,7 +102,8 @@ class HandcraftedAudioPlayer():
         self.__on_track_ended : list = list()
         self.__current_playlist : list[TrackInfo] | None = None
         self.__current_track_index : int = 0
-        self.__playback_stoped : bool = False
+        self.__playback_stoped : bool = True
+        self.__playback_paused : bool = True
         pass
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
@@ -126,25 +127,11 @@ class HandcraftedAudioPlayer():
         self.__output_device = OutputDevice(self.__current_device_info.index)
 
     @property
-    def current_device_info(self) -> DeviceInfo | None:
-        if self.__current_device_info:
-            return self.__current_device_info
-        return None
-
-    @property
     def is_playing(self) -> bool:
         if self.__output_device:
             return self.__output_device.is_playing
         return False
     
-    @property
-    def on_track_changed(self) -> list:
-        return self.__on_track_changed
-
-    @property
-    def on_track_ended(self) -> list:
-        return self.__on_track_ended
-
     @property
     def current_device(self) -> DeviceInfo | None:
         return self.__current_device_info
@@ -180,27 +167,47 @@ class HandcraftedAudioPlayer():
             track.format = self.__output_device.configuration.file.format
             self.__current_track_info = track
             for event in self.on_track_changed:
-                event(self.__current_track_info, self.current_device_info)
-            asyncio.create_task(self.wait_and_play_next())
+                event(self.__current_track_info, self.__current_device_info)
+            asyncio.create_task(self.__wait_and_play_next())
+            self.__playback_stoped = False
+            self.__playback_paused = False
 
-    async def wait_and_play_next(self):
+    async def __wait_and_play_next(self):
         while self.is_playing == True:
             await asyncio.sleep(1)
         if self.__playback_stoped == False:
             await self.next()
 
+    @property
+    def on_track_changed(self) -> list:
+        return self.__on_track_changed
+
+    @property
+    def on_track_ended(self) -> list:
+        return self.__on_track_ended
+
+    @property
+    def is_paused(self) -> bool :
+        return self.__playback_paused
+
+    @property
+    def is_stoped(self) -> bool:
+        return self.__playback_stoped
+
     def resume(self):
         if self.__output_device:
             self.__output_device.resume()
+            self.__playback_paused = False
 
     def pause(self):
         if self.__output_device:
             self.__output_device.pause()
+            self.__playback_paused = True
 
     def stop(self):
         if self.__output_device:
-            self.__playback_stoped = True
             self.__output_device.stop()
+            self.__playback_stoped = True
 
     def __increase_current_index(self):
         if self.__current_playlist:
