@@ -25,6 +25,10 @@ class DeviceItem(ListItem):
     #device_info_name {
         width: 100%;
     }
+
+    .selected {
+        background: gray;
+    }
     """
 
     device : DeviceInfo
@@ -33,10 +37,14 @@ class DeviceItem(ListItem):
         return super().__init__(*args, **kwargs)
     
     def compose(self) -> ComposeResult:
+        player : HandcraftedAudioPlayer = self.app.player
+        if player.current_device_info and player.current_device_info.index == self.device.index:
+            self.add_class("selected")
         if self.device.is_default_output_device:
-            yield Label(">", id="device_info_default_device")
+            yield Label("*", id="device_info_default_device")
         else:
             yield Label(" ", id="device_info_default_device")
+
         yield Label(self.device.hostapi.name, id="device_info_host_name")
         yield Label(self.device.name, id="device_info_name")
 
@@ -58,7 +66,13 @@ class SelectOutputDeviceDialog(Static):
         border: darkgrey round;
         content-align: center middle;
         width: 80;
-        height: 15;
+        height: 17;
+    }
+
+    #select_output_device_title {
+        align: center middle;
+        width: 100%;
+        border-bottom: solid gray;
     }
     """
 
@@ -71,6 +85,7 @@ class SelectOutputDeviceDialog(Static):
         self._output_device_list_view = ListView(id="select_output_device_list")
         self._output_device_list_view.focus()
         yield Vertical(
+            Static("Select output device", id="select_output_device_title"),
             self._output_device_list_view,
             SelectOutputDeviceButtons(id="select_output_device_buttons")
         )

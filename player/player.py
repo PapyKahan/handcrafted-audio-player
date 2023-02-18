@@ -183,7 +183,6 @@ class HandcraftedAudioPlayer():
                 event(self.__current_track_info, self.current_device_info)
             asyncio.create_task(self.wait_and_play_next())
 
-
     async def wait_and_play_next(self):
         while self.is_playing == True:
             await asyncio.sleep(1)
@@ -209,7 +208,6 @@ class HandcraftedAudioPlayer():
                 self.__current_track_index=0
             else:
                 self.__current_track_index+= 1
-
     
     async def next(self) -> None:
         self.__increase_current_index()
