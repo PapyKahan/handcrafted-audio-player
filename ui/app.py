@@ -63,7 +63,7 @@ class SelectOutputDeviceDialog(Static):
     """
 
     def __init__(self, *args, **kwargs):
-        self._selected_device = None
+        self.__selected_device = None
         self._output_device_list_view : ListView
         return super().__init__(*args, **kwargs)
 
@@ -78,14 +78,14 @@ class SelectOutputDeviceDialog(Static):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button = event.button
         if button.id == "select_output_device_ok":
-            if self._selected_device != None:
-                self.app.player.set_output_device(self._selected_device)
+            if self.__selected_device != None:
+                self.app.player.set_output_device(self.__selected_device)
                 self.app.pop_screen()
         elif button.id == "select_output_device_cancel":
             self.app.pop_screen()
 
     def on_list_view_selected(self, selected: ListView.Selected) -> None:
-        self._selected_device = selected.item.device
+        self.__selected_device = selected.item.device
 
     def on_mount(self) -> None:
         apis = self.app.player.get_outout_device_list_by_api()
@@ -118,51 +118,50 @@ class HandcraftedAudioPlayerApp(App):
     """
 
     BINDINGS = [
-            ("q", "quit", "Quit"),
-            ("o", "select_output_device", "Select Output"),
-        ]
+        ("q", "quit", "Quit"),
+        ("o", "select_output_device", "Select Output"),
+    ]
 
     def __init__(self, playlist : list, *args, **kwargs):
-        self._player = HandcraftedAudioPlayer()
-        self._player.set_playlist(playlist)
-        self._current_playlist_data_table: DataTable = DataTable(zebra_stripes=True)
-        self._current_playlist_data_table.cursor_type = "row" 
+        self.__player = HandcraftedAudioPlayer()
+        self.__player.set_playlist(playlist)
+        self.__current_playlist_data_table: DataTable = DataTable(zebra_stripes=True)
+        self.__current_playlist_data_table.cursor_type = "row" 
         self._current_track_controls = CurrentTrackWidget(id="current_track_controls")
-        self._previous_track_index : int = 0
+        self.__previous_track_index : int = 0
         return super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Vertical(
-            self._current_playlist_data_table,
+            self.__current_playlist_data_table,
             self._current_track_controls
         )
         yield Footer()
 
     @property
     def player(self) -> HandcraftedAudioPlayer:
-        return self._player
+        return self.__player
     
     def action_select_output_device(self):
         if self.screen.id != "select_output_device_screen":
             self.push_screen(SelectOutputDeviceScreen(id="select_output_device_screen"))
 
     async def on_data_table_row_selected(self, selected_row : DataTable.RowSelected) -> None:
-        await self._player.play(selected_row.cursor_row)
+        await self.__player.play(selected_row.cursor_row)
 
     def __on_track_changed(self, *_):
-        if self._player.current_track_index:
-            self._current_playlist_data_table.update_cell_at(Coordinate(self._previous_track_index, 0), "", update_width=True)
-            self._current_playlist_data_table.update_cell_at(Coordinate(self._player.current_track_index, 0), "", update_width=True)
-            self._previous_track_index = self._player._current_track_index
+        self.__current_playlist_data_table.update_cell_at(Coordinate(self.__previous_track_index, 0), "", update_width=True)
+        self.__current_playlist_data_table.update_cell_at(Coordinate(self.__player.current_track_index, 0), "", update_width=True)
+        self.__previous_track_index = self.__player.current_track_index
 
     def on_mount(self) -> None:
-        self._player.on_track_changed.append(self.__on_track_changed)
-        self._current_playlist_data_table.add_columns(" ", "Title", "Artist", "Duration")
-        if self._player.current_playlist:
-            for file in self._player.current_playlist:
+        self.__player.on_track_changed.append(self.__on_track_changed)
+        self.__current_playlist_data_table.add_columns(" ", "Title", "Artist", "Duration")
+        if self.__player.current_playlist:
+            for file in self.__player.current_playlist:
                 t = time.gmtime(file.duration)
-                self._current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
+                self.__current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
 
 
 

@@ -98,13 +98,13 @@ class TrackInfo():
 
 class HandcraftedAudioPlayer():
     def __init__(self):
-        self._current_device_info : DeviceInfo | None = None
-        self._current_track_info : TrackInfo | None = None
-        self._output_device : OutputDevice | None = None
-        self._on_track_changed : list = list()
-        self._on_track_ended : list = list()
-        self._current_playlist : list[TrackInfo] | None = None
-        self._current_track_index : int = 0
+        self.__current_device_info : DeviceInfo | None = None
+        self.__current_track_info : TrackInfo | None = None
+        self.__output_device : OutputDevice | None = None
+        self.__on_track_changed : list = list()
+        self.__on_track_ended : list = list()
+        self.__current_playlist : list[TrackInfo] | None = None
+        self.__current_track_index : int = 0
         self.__playback_stoped : bool = False
         pass
 
@@ -123,68 +123,68 @@ class HandcraftedAudioPlayer():
         return filelist
     
     def set_output_device(self, device : DeviceInfo):
-        if self._output_device:
-            self._output_device.stop()
-        self._current_device_info = device
-        self._output_device = OutputDevice(self._current_device_info.index)
+        if self.__output_device:
+            self.__output_device.stop()
+        self.__current_device_info = device
+        self.__output_device = OutputDevice(self.__current_device_info.index)
 
     @property
     def current_device_info(self) -> DeviceInfo | None:
-        if self._current_device_info:
-            return self._current_device_info
+        if self.__current_device_info:
+            return self.__current_device_info
         return None
 
     @property
     def is_playing(self) -> bool:
-        if self._output_device:
-            return self._output_device.is_playing
+        if self.__output_device:
+            return self.__output_device.is_playing
         return False
     
     @property
     def on_track_changed(self) -> list:
-        return self._on_track_changed
+        return self.__on_track_changed
 
     @property
     def on_track_ended(self) -> list:
-        return self._on_track_ended
+        return self.__on_track_ended
 
     @property
     def current_device(self) -> DeviceInfo | None:
-        return self._current_device_info
+        return self.__current_device_info
 
     @property
     def current_track(self) -> TrackInfo | None:
-        self._current_track_info
+        self.__current_track_info
 
     @property
     def current_playlist(self) -> list[TrackInfo] | None:
-        return self._current_playlist
+        return self.__current_playlist
     
     @property
-    def current_track_index(self) -> int | None :
-        return self._current_track_index
+    def current_track_index(self) -> int :
+        return self.__current_track_index
 
     def set_playlist(self, playlist : list[TrackInfo] | None):
-       self._current_playlist = playlist 
+       self.__current_playlist = playlist 
 
     async def play(self, index : int | None = None) -> None:
-        if self._output_device and self._current_playlist:
+        if self.__output_device and self.__current_playlist:
             track : TrackInfo | None = None
-            if index:
-                self._current_track_index = index
-            track = self._current_playlist[self._current_track_index]
+            if index != None:
+                self.__current_track_index = index
+            track = self.__current_playlist[self.__current_track_index]
 
-            self._output_device.initialize_playback(track.path)
-            track.channels = self._output_device.context.file.channels
-            track.bitdepth = self._output_device.context.file.subtype_info
-            track.playback_samplerate = self._output_device.context.samplerate
-            track.format = self._output_device.context.file.format
+            self.__output_device.initialize_playback(track.path)
+            track.channels = self.__output_device.context.file.channels
+            track.bitdepth = self.__output_device.context.file.subtype_info
+            track.playback_samplerate = self.__output_device.context.samplerate
+            track.format = self.__output_device.context.file.format
 
-            self._current_track_info = track
+            self.__current_track_info = track
             for event in self.on_track_changed:
-                event(self._current_track_info, self.current_device_info)
+                event(self.__current_track_info, self.current_device_info)
 
-            self._output_device.play()
+            self.__output_device.play()
             self.__playback_stoped = False
             asyncio.create_task(self.wait_and_play_next())
 
@@ -196,24 +196,24 @@ class HandcraftedAudioPlayer():
             await self.next()
 
     def resume(self):
-        if self._output_device:
-            self._output_device.resume()
+        if self.__output_device:
+            self.__output_device.resume()
 
     def pause(self):
-        if self._output_device:
-            self._output_device.pause()
+        if self.__output_device:
+            self.__output_device.pause()
 
     def stop(self):
-        if self._output_device:
+        if self.__output_device:
             self.__playback_stoped = True
-            self._output_device.stop()
+            self.__output_device.stop()
 
     def __increase_current_index(self):
-        if self._current_playlist:
-            if self._current_track_index == len(self._current_playlist)-1:
-                self._current_track_index=0
+        if self.__current_playlist:
+            if self.__current_track_index == len(self.__current_playlist)-1:
+                self.__current_track_index=0
             else:
-                self._current_track_index+= 1
+                self.__current_track_index+= 1
 
     
     async def next(self) -> None:
@@ -221,11 +221,11 @@ class HandcraftedAudioPlayer():
         await self.play()
 
     def __decrease_current_index(self):
-        if self._current_playlist:
-            if self._current_track_index == 0:
-                self._current_track_index = len(self._current_playlist)-1
+        if self.__current_playlist:
+            if self.__current_track_index == 0:
+                self.__current_track_index = len(self.__current_playlist)-1
             else:
-                self._current_track_index -= 1
+                self.__current_track_index -= 1
 
     async def previous(self):
         self.__decrease_current_index()
