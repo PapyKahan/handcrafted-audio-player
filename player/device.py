@@ -5,7 +5,7 @@ import threading
 import sounddevice
 import sys
 from os import error
-from typing import Any, Tuple
+from typing import Any
 from sounddeviceextensions import ExWasapiSettings
 from typing import Any
 
@@ -123,7 +123,7 @@ class OutputDeviceConfiguration:
 
     def __initialize_extra_settings(self):
         if self.__device_info.hostapi.name == "Windows WASAPI":
-            self.extra_settings = ExWasapiSettings(exclusive=True, polling=True, thread_priority=True) # WASAPI polling mode
+            self.extra_settings = ExWasapiSettings(exclusive=True, polling=True) # WASAPI polling mode
 
     def __get_max_playback_samplerate(self) -> int:
         sample_rates = [384000, 352800, 192000, 176400, 96000, 88200, 48000, 44100, 22050]
@@ -141,10 +141,10 @@ class OutputDeviceConfiguration:
         return 0
 
 class DevicePlaybackInfo():
-    samplerate : int
-    channels : int
-    bitdepth : str
-    filetype : str
+    samplerate: int
+    channels: int
+    bitdepth: str
+    filetype: str
 
     def __init__(self, samplerate: int, channels: int, bitdepth: str, filetype: str):
         self.samplerate = samplerate
@@ -154,20 +154,21 @@ class DevicePlaybackInfo():
 
 class OutputDevice:
     def __init__(self, device_info: DeviceInfo):
-        self.__device_info = device_info
+        self.__device_info: DeviceInfo = device_info
         self.__start_streaming_event: threading.Event = threading.Event()
-        self.__output_stream : sounddevice.OutputStream | None = None
+        self.__output_stream: sounddevice.OutputStream | None = None
         self.__buffer_worker: threading.Thread | None = None
         self.__buffer: numpy.ndarray
-        self.__current_buffer_read_position : int = 0
-        self.__device_is_streaming = False
+        self.__current_buffer_read_position: int = 0
+        self.__device_is_streaming: bool = False
         self.__configuration: OutputDeviceConfiguration
+        self.__resampler: soxr.ResampleStream
 
     
     def __initialize_playback(self, filepath: str):
         self.__configuration = OutputDeviceConfiguration(filename=filepath, device_info=self.__device_info)
         self.__buffer = numpy.ndarray(shape=(self.__configuration.file.frames, self.__configuration.channels), dtype=self.__configuration.dtype)
-        self.resampler = soxr.ResampleStream(
+        self.__resampler = soxr.ResampleStream(
                 in_rate=self.__configuration.file.samplerate,
                 out_rate=self.__configuration.samplerate,
                 num_channels=self.__configuration.channels,
@@ -191,7 +192,7 @@ class OutputDevice:
                     frames = f.frames - f.tell()
                 data = f.read(frames=frames, dtype=self.__buffer.dtype, always_2d=True, fill_value=0)
                 if self.__configuration.samplerate != f.samplerate:
-                    data = self.resampler.resample_chunk(data)
+                    data = self.__resampler.resample_chunk(data)
                 if len(data):
                     self.__buffer[position:position+len(data)] = data
                 position += len(data)
