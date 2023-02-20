@@ -5,7 +5,7 @@ import threading
 import sounddevice
 import sys
 from os import error
-from typing import Any
+from typing import Any, Tuple
 from sounddeviceextensions import ExWasapiSettings
 from typing import Any
 
@@ -38,6 +38,7 @@ class HostApiInfo():
         return self.__default_output_device
 
 class DeviceInfo():
+    max_playback_samplerate : int
     def __init__(self, device_info : dict[str, Any], hostapi_info : HostApiInfo, is_default_device : bool = False):
         self.__hostapi = hostapi_info
         self.__is_default_output_device = is_default_device
@@ -90,14 +91,27 @@ class OutputDeviceConfiguration:
     channels: int
     dtype: Any
     file: soundfile._SoundFileInfo
+    extra_settings : Any | None = None
 
-    def __init__(self, filename: str, device, max_sample_rate : int):
+    def __init__(self, filename: str, device_info : DeviceInfo):
+        self.__device_info = device_info
         self.file = soundfile.info(filename)
-        self.channels = device._channels
+
+        self.__initialize_extra_settings()
+
+        # Initialize channels
+        if device_info.max_output_channels > 2:
+            self.channels = 2
+        else:
+            self.channels = device_info.max_output_channels
+
+        # Define playback sample rate
         self.samplerate = self.file.samplerate
+        max_playback_samplerate = self.__get_max_playback_samplerate()
         self.prefill_buffersize = 20
-        if int(self.file.samplerate) > max_sample_rate:
-            self.samplerate = max_sample_rate
+        if int(self.file.samplerate) > max_playback_samplerate:
+            self.samplerate = max_playback_samplerate
+
         self.blocksize = int(self.samplerate/8)
 
         if self.file.subtype == 'PCM_16':
@@ -107,52 +121,66 @@ class OutputDeviceConfiguration:
         else:
             self.dtype = numpy.float32
 
-class OutputDevice:
-    configuration: OutputDeviceConfiguration
+    def __initialize_extra_settings(self):
+        if self.__device_info.hostapi.name == "Windows WASAPI":
+            self.extra_settings = ExWasapiSettings(exclusive=True, polling=True, thread_priority=True) # WASAPI polling mode
 
-    def __init__(self, device_id : int):
-        self._channels : int = 2
-        self.__id = device_id
-        self.__extra_settings : Any = ExWasapiSettings(exclusive=True, polling=True, thread_priority=True) # WASAPI polling mode
-        self.__device_max_samplerate : int = self.__get_max_samplerate()
-        self.__start_streaming_event: threading.Event = threading.Event()
-        self.__output_stream : sounddevice.OutputStream | None = None
-        self.__buffer_worker: threading.Thread | None = None
-        self.__buffer: numpy.ndarray
-        self.__current_buffer_read_position : int = 0
-        self.__device_is_streaming = False
-    
-    def __initialize_playback(self, filepath: str):
-        self.configuration = OutputDeviceConfiguration(filename=filepath, device=self, max_sample_rate=self.__device_max_samplerate)
-        self.__buffer = numpy.ndarray(shape=(self.configuration.file.frames, self._channels), dtype=self.configuration.dtype)
-        self.resampler = soxr.ResampleStream(
-                in_rate=self.configuration.file.samplerate,
-                out_rate=self.configuration.samplerate,
-                num_channels=self._channels,
-                dtype=self.configuration.dtype,
-                quality=soxr.VHQ
-            )
-
-    def __get_max_samplerate(self) -> int:
+    def __get_max_playback_samplerate(self) -> int:
         sample_rates = [384000, 352800, 192000, 176400, 96000, 88200, 48000, 44100, 22050]
         for rate in sample_rates:
             try:
                 sounddevice.check_output_settings(
                     samplerate=rate,
-                    device=self.__id,
-                    channels=self._channels,
-                    extra_settings=self.__extra_settings,
+                    device=self.__device_info.index,
+                    channels=self.channels,
+                    extra_settings=self.extra_settings,
                 )
                 return rate
             except Exception:
                 rate = 0
         return 0
 
+class DevicePlaybackInfo():
+    samplerate : int
+    channels : int
+    bitdepth : str
+    filetype : str
+
+    def __init__(self, samplerate: int, channels: int, bitdepth: str, filetype: str):
+        self.samplerate = samplerate
+        self.channels = channels
+        self.bitdepth = bitdepth
+        self.filetype = filetype
+
+class OutputDevice:
+    def __init__(self, device_info: DeviceInfo):
+        self.__device_info = device_info
+        self.__start_streaming_event: threading.Event = threading.Event()
+        self.__output_stream : sounddevice.OutputStream | None = None
+        self.__buffer_worker: threading.Thread | None = None
+        self.__buffer: numpy.ndarray
+        self.__current_buffer_read_position : int = 0
+        self.__device_is_streaming = False
+        self.__configuration: OutputDeviceConfiguration
+
+    
+    def __initialize_playback(self, filepath: str):
+        self.__configuration = OutputDeviceConfiguration(filename=filepath, device_info=self.__device_info)
+        self.__buffer = numpy.ndarray(shape=(self.__configuration.file.frames, self.__configuration.channels), dtype=self.__configuration.dtype)
+        self.resampler = soxr.ResampleStream(
+                in_rate=self.__configuration.file.samplerate,
+                out_rate=self.__configuration.samplerate,
+                num_channels=self.__configuration.channels,
+                dtype=self.__configuration.dtype,
+                quality=soxr.VHQ
+            )
+
+
     def __fill_buffer_worker(self) -> None:
-        with soundfile.SoundFile(file=self.configuration.file.name) as f:
+        with soundfile.SoundFile(file=self.__configuration.file.name) as f:
             position = 0
-            frames = self.configuration.blocksize
-            prefill_buffer_count = self.configuration.prefill_buffersize
+            frames = self.__configuration.blocksize
+            prefill_buffer_count = self.__configuration.prefill_buffersize
     
             # Fill the buffer
             while f.tell() < f.frames:
@@ -162,7 +190,7 @@ class OutputDevice:
                 if f.tell() + frames > f.frames:
                     frames = f.frames - f.tell()
                 data = f.read(frames=frames, dtype=self.__buffer.dtype, always_2d=True, fill_value=0)
-                if self.configuration.samplerate != f.samplerate:
+                if self.__configuration.samplerate != f.samplerate:
                     data = self.resampler.resample_chunk(data)
                 if len(data):
                     self.__buffer[position:position+len(data)] = data
@@ -171,9 +199,9 @@ class OutputDevice:
     
             # Resize the buffer to it's actual length
             if position < f.frames:
-                self.__buffer.resize((position, self.configuration.channels), refcheck=False)
+                self.__buffer.resize((position, self.__configuration.channels), refcheck=False)
 
-    def play(self, filepath : str) -> None:
+    def play(self, filepath : str) -> DevicePlaybackInfo:
         """Plays a sound file on ouput device
 
         Parameters
@@ -216,12 +244,12 @@ class OutputDevice:
                 raise sounddevice.CallbackStop()
 
         self.__output_stream = sounddevice.OutputStream(
-                device=self.__id,
+                device=self.__device_info.index,
                 dtype=self.__buffer.dtype,
-                extra_settings=self.__extra_settings,
-                samplerate=self.configuration.samplerate,
-                blocksize=self.configuration.blocksize,
-                channels=self.configuration.channels,
+                extra_settings=self.__configuration.extra_settings,
+                samplerate=self.__configuration.samplerate,
+                blocksize=self.__configuration.blocksize,
+                channels=self.__configuration.channels,
                 dither_off=True,
                 clip_off=True,
                 callback=callback,
@@ -229,6 +257,7 @@ class OutputDevice:
         self.__start_streaming_event.wait()
         self.__output_stream.start()
         self.__device_is_streaming = True
+        return DevicePlaybackInfo(samplerate=self.__configuration.samplerate, channels=self.__configuration.channels, bitdepth=self.__configuration.file.subtype_info, filetype=self.__configuration.file.format)
 
     @property
     def is_playing(self) -> bool:

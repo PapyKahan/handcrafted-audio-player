@@ -2,7 +2,7 @@ import asyncio
 import sounddevice
 import os
 from tinytag import TinyTag
-from player.device import OutputDevice, DeviceInfo, HostApiInfo
+from player.device import DevicePlaybackInfo, OutputDevice, DeviceInfo, HostApiInfo
 
 class TrackInfo():
     path : str
@@ -14,7 +14,7 @@ class TrackInfo():
     samplerate : int
     channels : int
     bitdepth : str
-    format: str
+    filetype: str
     playback_samplerate : int
 
 class HandcraftedAudioPlayer():
@@ -48,7 +48,7 @@ class HandcraftedAudioPlayer():
         if self.__output_device:
             self.__output_device.stop()
         self.__current_device_info = device
-        self.__output_device = OutputDevice(self.__current_device_info.index)
+        self.__output_device = OutputDevice(self.__current_device_info)
 
     @property
     def is_playing(self) -> bool:
@@ -82,13 +82,13 @@ class HandcraftedAudioPlayer():
 
             track = self.__current_playlist[self.__current_track_index]
 
-            self.__output_device.play(track.path)
-            self.__playback_stoped = False
+            playback_info = self.__output_device.play(track.path)
 
-            track.channels = self.__output_device.configuration.file.channels
-            track.bitdepth = self.__output_device.configuration.file.subtype_info
-            track.playback_samplerate = self.__output_device.configuration.samplerate
-            track.format = self.__output_device.configuration.file.format
+            self.__playback_stoped = False
+            track.channels = playback_info.channels
+            track.bitdepth = playback_info.bitdepth
+            track.playback_samplerate = playback_info.samplerate
+            track.filetype = playback_info.filetype
             self.__current_track_info = track
             for event in self.on_track_changed:
                 event(self.__current_track_info, self.__current_device_info)

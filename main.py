@@ -2,10 +2,11 @@
 import argparse
 import os
 from numpy import random
-import sounddevice as sd
+import sounddevice
 import asyncio
 from player import OutputDevice
 from tinytag import TinyTag
+from player.device import DeviceInfo, HostApiInfo
 from player.player import TrackInfo
 from ui import HandcraftedAudioPlayerApp
 
@@ -15,7 +16,7 @@ parser.add_argument(
     help='show list of audio devices and exit')
 args, remaining = parser.parse_known_args()
 if args.list_devices:
-    print(sd.query_devices())
+    print(sounddevice.query_devices())
     parser.exit(0)
 parser = argparse.ArgumentParser(
     description=__doc__,
@@ -26,7 +27,7 @@ parser.add_argument(
     help='audio library path')
 args = parser.parse_args(remaining)
 
-def find_output_device(hostapi: str, devicename: str) -> int:
+def find_output_device(hostapi: str, devicename: str) -> DeviceInfo | None:
     """Returns found device index
 
     Parameters
@@ -42,14 +43,16 @@ def find_output_device(hostapi: str, devicename: str) -> int:
         device id or -1 if device hasn't been found
     """
     hostapi_index = 0
+    hostapi_info : HostApiInfo = None
     for api in sounddevice.query_hostapis():
         if api['name'].find(hostapi) >= 0:
+            hostapi_info = HostApiInfo(api)
             break;
         hostapi_index+=1
     for device in sounddevice.query_devices():
         if device['max_input_channels'] == 0 and device['name'].find(devicename) >= 0 and device['hostapi'] == hostapi_index:
-            return device['index']
-    return -1
+            return DeviceInfo(device, hostapi_info)
+    return None
 
 def get_files_into_directory(path: str) -> list:
     filelist = list()
@@ -71,20 +74,19 @@ def get_files_into_directory(path: str) -> list:
 
 
 if __name__ == "__main__":
-    #deviceid = find_output_device('WASAPI', 'Cayin RU6')
-    #deviceid = find_output_device('WASAPI', 'DETHONRAY Honey H1')
-    #deviceid = find_output_device('WASAPI', 'Qudelix-5K USB DAC')
+    #device = find_output_device('WASAPI', 'Cayin RU6')
+    #device = find_output_device('WASAPI', 'DETHONRAY Honey H1')
+    #device = find_output_device('WASAPI', 'Qudelix-5K USB DAC')
     #deviceid = find_output_device('WASAPI', 'Realtek High Definition Audio(SST)')
-    #if deviceid < 0:
+    #if not device:
     #    parser.exit(1, 'Device not found')
-    #device = OutputDevice(deviceid)
+    #device = OutputDevice(device)
 
     try:
         playlist = get_files_into_directory(args.path)
         random.shuffle(playlist)
         #for file in playlist:
-        #    device.initialize_playback(file.path)
-        #    device.play()
+        #    device.play(file.path)
         #    while device.is_playing == True:
         #        asyncio.run(asyncio.sleep(1))
 

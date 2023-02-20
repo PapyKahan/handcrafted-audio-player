@@ -2,8 +2,8 @@ import asyncio
 import time
 from rich.progress import BarColumn, Progress, Task, Text, TextColumn
 from textual.app import ComposeResult
-from textual.widgets import Label, Static, Button, DataTable
-from player.player import DeviceInfo, HandcraftedAudioPlayer, TrackInfo
+from textual.widgets import Label, Static, Button
+from player.player import DeviceInfo, TrackInfo
 
 
 class TrackDetails(Static):
@@ -12,6 +12,7 @@ class TrackDetails(Static):
     track_album : Label = Label("Album:", id="track_album")
     track_info : Label = Label("[ Info: ]", id="track_technical_info")
     track_device_info : Label = Label("Device:", id="track_device_info")
+    device_host_api_info : Label = Label("Host:", id="device_host_api_info")
 
     def compose(self) -> ComposeResult:
         yield self.track_name
@@ -19,6 +20,7 @@ class TrackDetails(Static):
         yield self.track_album
         yield self.track_info
         yield self.track_device_info
+        yield self.device_host_api_info
 
     def on_mount(self) -> None:
         self.app.player.on_track_changed.append(self.__on_track_changed)
@@ -27,8 +29,9 @@ class TrackDetails(Static):
         self.track_name.update(f"Track: {track.title}")
         self.track_artist.update(f"Artist: {track.artist}")
         self.track_album.update(f"Album: {track.album}")
-        self.track_info.update(f"[ Info: Samplerate = {track.samplerate}Hz, bitdeph = {track.bitdepth}, format = {track.format} ]")
+        self.track_info.update(f"[ Info: Samplerate = {track.samplerate}Hz, bitdeph = {track.bitdepth}, type = {track.filetype} ]")
         self.track_device_info.update(f"Device: Name = {device.name}, channels = {track.channels}, Playback samplerate = {track.playback_samplerate}Hz")
+        self.device_host_api_info.update(f"Host api: Name = {device.hostapi.name}")
 
 class TrackControls(Static):
     DEFAULT_CSS = """
@@ -137,7 +140,7 @@ class CurrentTrackWidget(Static):
     TrackInfo {
         layout: vertical;
         content-align-horizontal: center;
-        height: 5;
+        height: 6;
     }
 
     #track_name {
@@ -171,6 +174,14 @@ class CurrentTrackWidget(Static):
     }
 
     #track_device_info {
+        text-style: italic;
+        width: 100%;
+        text-align: center;
+        color: $text;
+        background: $boost;
+    }
+
+    #device_host_api_info {
         text-style: italic;
         width: 100%;
         text-align: center;
