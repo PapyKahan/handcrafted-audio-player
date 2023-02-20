@@ -31,7 +31,7 @@ class TrackDetails(Static):
         self.track_album.update(f"Album: {track.album}")
         self.track_info.update(f"[ Info: Samplerate = {track.samplerate}Hz, bitdeph = {track.bitdepth}, type = {track.filetype} ]")
         self.track_device_info.update(f"Device: Name = {device.name}, channels = {track.channels}")
-        self.device_host_api_info.update(f"Host api: Name = {device.hostapi.name}")
+        self.device_host_api_info.update(f"Host api: {device.hostapi.name}")
 
 class TrackControls(Static):
     DEFAULT_CSS = """
@@ -73,7 +73,10 @@ class TrackControls(Static):
         button = event.button
         if button.id == "play_track":
             if self.app.player.is_playing == False:
-                await self.app.player.play()
+                if not self.app.player.current_device:
+                    self.app.action_select_output_device()
+                else:
+                    await self.app.player.play()
             else:
                 self.app.player.resume()
                 self.query_one("#pause_track").toggle_class("hidden")

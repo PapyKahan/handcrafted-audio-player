@@ -176,7 +176,10 @@ class HandcraftedAudioPlayerApp(App):
             self.push_screen(SelectOutputDeviceScreen(id="select_output_device_screen"))
 
     async def on_data_table_row_selected(self, selected_row : DataTable.RowSelected) -> None:
-        await self.__player.play(selected_row.cursor_row)
+        if not self.__player.current_device:
+            self.action_select_output_device()
+        else:
+            await self.__player.play(selected_row.cursor_row)
 
     def __on_track_changed(self, *_):
         self.__current_playlist_data_table.update_cell_at(Coordinate(self.__previous_track_index, 0), " ", update_width=True)
