@@ -78,15 +78,16 @@ class SelectOutputDeviceDialog(Static):
 
     def __init__(self, *args, **kwargs):
         self.__selected_device = None
-        self._output_device_list_view : ListView
+        self.__output_device_list_view : ListView
+        self.__previously_selected_item : ListItem | None = None
         return super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
-        self._output_device_list_view = ListView(id="select_output_device_list")
-        self._output_device_list_view.focus()
+        self.__output_device_list_view = ListView(id="select_output_device_list")
+        self.__output_device_list_view.focus()
         yield Vertical(
             Static("Select output device", id="select_output_device_title"),
-            self._output_device_list_view,
+            self.__output_device_list_view,
             SelectOutputDeviceButtons(id="select_output_device_buttons")
         )
 
@@ -102,6 +103,10 @@ class SelectOutputDeviceDialog(Static):
 
     def on_list_view_selected(self, selected: ListView.Selected) -> None:
         self.__selected_device = selected.item.device
+        if self.__previously_selected_item:
+            self.__previously_selected_item.remove_class("selected")
+        selected.item.add_class("selected")
+        self.__previously_selected_item = selected.item
 
     def on_mount(self) -> None:
         apis = self.app.player.get_outout_device_list_by_api()
