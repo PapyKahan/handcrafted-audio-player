@@ -4,7 +4,7 @@ import os
 from numpy import random
 import sounddevice as sd
 import asyncio
-from player import OutputDevice, find_output_device
+from player import OutputDevice
 from tinytag import TinyTag
 from player.player import TrackInfo
 from ui import HandcraftedAudioPlayerApp
@@ -25,6 +25,31 @@ parser.add_argument(
     'path', metavar='PATH',
     help='audio library path')
 args = parser.parse_args(remaining)
+
+def find_output_device(hostapi: str, devicename: str) -> int:
+    """Returns found device index
+
+    Parameters
+    ----------
+    hostapi : str
+        Name or partial name of host api
+    devicename : str
+        Name or partial name of device
+
+    Returns
+    -------
+    int
+        device id or -1 if device hasn't been found
+    """
+    hostapi_index = 0
+    for api in sounddevice.query_hostapis():
+        if api['name'].find(hostapi) >= 0:
+            break;
+        hostapi_index+=1
+    for device in sounddevice.query_devices():
+        if device['max_input_channels'] == 0 and device['name'].find(devicename) >= 0 and device['hostapi'] == hostapi_index:
+            return device['index']
+    return -1
 
 def get_files_into_directory(path: str) -> list:
     filelist = list()
