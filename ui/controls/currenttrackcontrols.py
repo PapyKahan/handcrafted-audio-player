@@ -30,7 +30,7 @@ class TrackDetails(Static):
         self.track_artist.update(f"Artist: {track.artist}")
         self.track_album.update(f"Album: {track.album}")
         self.track_info.update(f"[ Info: Samplerate = {track.samplerate}Hz, bitdeph = {track.bitdepth}, type = {track.filetype} ]")
-        self.track_device_info.update(f"Device: Name = {device.name}, channels = {track.channels}, Playback samplerate = {track.playback_samplerate}Hz")
+        self.track_device_info.update(f"Device: Name = {device.name}, channels = {track.channels}")
         self.device_host_api_info.update(f"Host api: Name = {device.hostapi.name}")
 
 class TrackControls(Static):

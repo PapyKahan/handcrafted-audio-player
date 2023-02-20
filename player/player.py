@@ -2,7 +2,7 @@ import asyncio
 import sounddevice
 import os
 from tinytag import TinyTag
-from player.device import DevicePlaybackInfo, OutputDevice, DeviceInfo, HostApiInfo
+from player.device import OutputDevice, DeviceInfo, HostApiInfo
 
 class TrackInfo():
     path : str
@@ -15,7 +15,6 @@ class TrackInfo():
     channels : int
     bitdepth : str
     filetype: str
-    playback_samplerate : int
 
 class HandcraftedAudioPlayer():
     def __init__(self):
@@ -33,6 +32,8 @@ class HandcraftedAudioPlayer():
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
         host_apis = list[HostApiInfo]()
         for api in sounddevice.query_hostapis():
+            #if api['name'] in ("Windows WASAPI", "ASIO", "Windows DirectSound", "Windows WDM-KS", "MME"):
+            #if api['name'] not in ("Windows WDM-KS", "MME"):
             host_apis.append(HostApiInfo(api))
         return host_apis
 
@@ -87,7 +88,6 @@ class HandcraftedAudioPlayer():
             self.__playback_stoped = False
             track.channels = playback_info.channels
             track.bitdepth = playback_info.bitdepth
-            track.playback_samplerate = playback_info.samplerate
             track.filetype = playback_info.filetype
             self.__current_track_info = track
             for event in self.on_track_changed:

@@ -37,9 +37,6 @@ class DeviceItem(ListItem):
         return super().__init__(*args, **kwargs)
     
     def compose(self) -> ComposeResult:
-        player : HandcraftedAudioPlayer = self.app.player
-        if player.current_device and player.current_device.index == self.device.index:
-            self.add_class("selected")
         if self.device.is_default_output_device:
             yield Label("*", id="device_info_default_device")
         else:
@@ -113,7 +110,17 @@ class SelectOutputDeviceDialog(Static):
         list_view = self.query_one("#select_output_device_list")
         for api in apis:
             for device in api.devices:
-                list_view.append(DeviceItem(device))
+                item = DeviceItem(device)
+                list_view.append(item)
+                player : HandcraftedAudioPlayer = self.app.player
+                if player.current_device:
+                    if player.current_device.index == device.index:
+                        item.add_class("selected")
+                        item.highlighted = True
+                    else:
+                        item.highlighted = False
+                    self.__previously_selected_item = item
+
 
 class SelectOutputDeviceScreen(Screen):
     DEFAULT_CSS="""

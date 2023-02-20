@@ -106,13 +106,13 @@ class OutputDeviceConfiguration:
             self.channels = device_info.max_output_channels
 
         # Define playback sample rate
-        self.samplerate = self.file.samplerate
-        max_playback_samplerate = self.__get_max_playback_samplerate()
-        self.prefill_buffersize = 20
-        if int(self.file.samplerate) > max_playback_samplerate:
-            self.samplerate = max_playback_samplerate
+        self.samplerate = int(self.file.samplerate)
+        max_output_samplerate = self.__get_max_playback_samplerate()
+        if self.samplerate > max_output_samplerate:
+            self.samplerate = max_output_samplerate
 
-        self.blocksize = int(self.samplerate/8)
+        self.prefill_buffersize = 20
+        self.blocksize = self.samplerate
 
         if self.file.subtype == 'PCM_16':
             self.dtype = numpy.int16
@@ -122,8 +122,9 @@ class OutputDeviceConfiguration:
             self.dtype = numpy.float32
 
     def __initialize_extra_settings(self):
+        self.extra_settings = None
         if self.__device_info.hostapi.name == "Windows WASAPI":
-            self.extra_settings = ExWasapiSettings(exclusive=True, polling=True) # WASAPI polling mode
+            self.extra_settings = ExWasapiSettings(exclusive=True, thread_priority=True, polling=True) # WASAPI polling mode
 
     def __get_max_playback_samplerate(self) -> int:
         sample_rates = [384000, 352800, 192000, 176400, 96000, 88200, 48000, 44100, 22050]
@@ -141,13 +142,11 @@ class OutputDeviceConfiguration:
         return 0
 
 class DevicePlaybackInfo():
-    samplerate: int
     channels: int
     bitdepth: str
     filetype: str
 
-    def __init__(self, samplerate: int, channels: int, bitdepth: str, filetype: str):
-        self.samplerate = samplerate
+    def __init__(self, channels: int, bitdepth: str, filetype: str):
         self.channels = channels
         self.bitdepth = bitdepth
         self.filetype = filetype
@@ -162,7 +161,7 @@ class OutputDevice:
         self.__current_buffer_read_position: int = 0
         self.__device_is_streaming: bool = False
         self.__configuration: OutputDeviceConfiguration
-        self.__resampler: soxr.ResampleStream
+        self.__resampler: soxr.ResampleStream | None = None
 
     
     def __initialize_playback(self, filepath: str):
@@ -191,7 +190,7 @@ class OutputDevice:
                 if f.tell() + frames > f.frames:
                     frames = f.frames - f.tell()
                 data = f.read(frames=frames, dtype=self.__buffer.dtype, always_2d=True, fill_value=0)
-                if self.__configuration.samplerate != f.samplerate:
+                if self.__configuration.samplerate != f.samplerate and self.__resampler:
                     data = self.__resampler.resample_chunk(data)
                 if len(data):
                     self.__buffer[position:position+len(data)] = data
@@ -255,10 +254,11 @@ class OutputDevice:
                 clip_off=True,
                 callback=callback,
             )
+
         self.__start_streaming_event.wait()
         self.__output_stream.start()
         self.__device_is_streaming = True
-        return DevicePlaybackInfo(samplerate=self.__configuration.samplerate, channels=self.__configuration.channels, bitdepth=self.__configuration.file.subtype_info, filetype=self.__configuration.file.format)
+        return DevicePlaybackInfo(channels=self.__configuration.channels, bitdepth=self.__configuration.file.subtype_info, filetype=self.__configuration.file.format)
 
     @property
     def is_playing(self) -> bool:
