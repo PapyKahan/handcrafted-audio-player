@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import os
-from numpy import random
 import sounddevice
 import asyncio
+from numpy import random
 from core import OutputDevice
 from tinytag import TinyTag
 from core.device import DeviceInfo, HostApiInfo
@@ -43,7 +43,7 @@ def find_output_device(hostapi: str, devicename: str) -> DeviceInfo | None:
         device id or -1 if device hasn't been found
     """
     hostapi_index = 0
-    hostapi_info : HostApiInfo = None
+    hostapi_info : HostApiInfo | None = None
     for api in sounddevice.query_hostapis():
         if api['name'].find(hostapi) >= 0:
             hostapi_info = HostApiInfo(api)
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     try:
         playlist = get_files_into_directory(args.path)
-        random.shuffle(playlist)
+        #random.shuffle(playlist)
         #for file in playlist:
         #    device.play(file.path)
         #    while device.is_playing == True:

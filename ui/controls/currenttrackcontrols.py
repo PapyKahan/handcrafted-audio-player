@@ -91,7 +91,8 @@ class TrackControls(Static):
             asyncio.create_task(self.app.player.previous())
         elif button.id == "next_track":
             asyncio.create_task(self.app.player.next())
-
+        elif button.id == "random_queue":
+            self.app.player.randomize()
 
 class TrackTimeColumn(TextColumn):
     def __init__(self, *args, **kwargs):

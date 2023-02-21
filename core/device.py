@@ -9,7 +9,7 @@ from typing import Any
 from core.sounddeviceextensions import ExWasapiSettings
 
 class HostApiInfo():
-    def __init__(self, hostapi_info: dict[str, Any]):
+    def __init__(self, hostapi_info: Any | dict[str, Any]):
         self.__name = hostapi_info['name']
         self.__devices = list[DeviceInfo]()
         self.__default_output_device = None
@@ -38,7 +38,7 @@ class HostApiInfo():
 
 class DeviceInfo():
     max_playback_samplerate : int
-    def __init__(self, device_info : dict[str, Any], hostapi_info : HostApiInfo, is_default_device : bool = False):
+    def __init__(self, device_info : dict[str, Any] | Any, hostapi_info : HostApiInfo, is_default_device : bool = False):
         self.__hostapi = hostapi_info
         self.__is_default_output_device = is_default_device
         self.__name = device_info['name']

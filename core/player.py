@@ -3,6 +3,7 @@ import sounddevice
 import os
 from tinytag import TinyTag
 from core.device import OutputDevice, DeviceInfo, HostApiInfo
+from numpy import random
 
 class TrackInfo():
     path : str
@@ -23,6 +24,7 @@ class HandcraftedAudioPlayer():
         self.__output_device : OutputDevice | None = None
         self.__on_track_changed : list = list()
         self.__on_track_ended : list = list()
+        self.__on_playlist_changed : list = list()
         self.__current_playlist : list[TrackInfo] | None = None
         self.__current_track_index : int = 0
         self.__playback_stoped : bool = True
@@ -32,8 +34,6 @@ class HandcraftedAudioPlayer():
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
         host_apis = list[HostApiInfo]()
         for api in sounddevice.query_hostapis():
-            #if api['name'] in ("Windows WASAPI", "ASIO", "Windows DirectSound", "Windows WDM-KS", "MME"):
-            #if api['name'] not in ("Windows WDM-KS", "MME"):
             host_apis.append(HostApiInfo(api))
         return host_apis
 
@@ -111,6 +111,10 @@ class HandcraftedAudioPlayer():
         return self.__on_track_ended
 
     @property
+    def on_playlist_changed(self) -> list:
+        return self.__on_playlist_changed
+
+    @property
     def is_paused(self) -> bool :
         return self.__playback_paused
 
@@ -154,3 +158,18 @@ class HandcraftedAudioPlayer():
     async def previous(self):
         self.__decrease_current_index()
         await self.play()
+
+    def randomize(self):
+        if self.__current_playlist:
+            current_file = self.__current_playlist[self.__current_track_index]
+            random.shuffle(self.__current_playlist)
+            index = 0
+            for track in self.__current_playlist:
+                if track.path == current_file.path:
+                    break
+                index += 1
+            self.__current_track_index = index
+            for event in self.__on_playlist_changed:
+                event()
+
+

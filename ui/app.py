@@ -187,10 +187,23 @@ class HandcraftedAudioPlayerApp(App):
         self.__current_playlist_data_table._highlight_row(self.__player.current_track_index)
         self.__previous_track_index = self.__player.current_track_index
 
-    def on_mount(self) -> None:
-        self.__player.on_track_changed.append(self.__on_track_changed)
-        self.__current_playlist_data_table.add_columns(" ", "Title", "Artist", "Duration")
+    def __on_playlist_changed(self, *_):
+        self.__current_playlist_data_table.clear()
+        self.__fill_playlist_widget()
+
+    def __fill_playlist_widget(self):
         if self.__player.current_playlist:
+            index = 0
             for file in self.__player.current_playlist:
                 t = time.gmtime(file.duration)
-                self.__current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
+                if self.__player.current_track_index == index:
+                    self.__current_playlist_data_table.add_row("", file.title, file.artist, time.strftime("%M:%S", t))
+                else:
+                    self.__current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
+                index += 1
+
+    def on_mount(self) -> None:
+        self.__player.on_track_changed.append(self.__on_track_changed)
+        self.__player.on_playlist_changed.append(self.__on_playlist_changed)
+        self.__current_playlist_data_table.add_columns(" ", "Title", "Artist", "Duration")
+        self.__fill_playlist_widget()
