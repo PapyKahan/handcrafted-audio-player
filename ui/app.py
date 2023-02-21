@@ -198,9 +198,11 @@ class HandcraftedAudioPlayerApp(App):
                 t = time.gmtime(file.duration)
                 if self.__player.current_track_index == index:
                     self.__current_playlist_data_table.add_row("", file.title, file.artist, time.strftime("%M:%S", t))
+                    self.__previous_track_index = index
                 else:
                     self.__current_playlist_data_table.add_row(" ", file.title, file.artist, time.strftime("%M:%S", t))
                 index += 1
+            self.__current_playlist_data_table._highlight_row(self.__player.current_track_index)
 
     def on_mount(self) -> None:
         self.__player.on_track_changed.append(self.__on_track_changed)
