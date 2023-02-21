@@ -6,8 +6,7 @@ import sounddevice
 import sys
 from os import error
 from typing import Any
-from sounddeviceextensions import ExWasapiSettings
-from typing import Any
+from core.sounddeviceextensions import ExWasapiSettings
 
 class HostApiInfo():
     def __init__(self, hostapi_info: dict[str, Any]):

@@ -3,7 +3,7 @@ import time
 from rich.progress import BarColumn, Progress, Task, TextColumn, Text
 from textual.app import ComposeResult
 from textual.widgets import Label, Static, Button
-from player.player import DeviceInfo, TrackInfo
+from core.player import DeviceInfo, TrackInfo
 
 
 class TrackDetails(Static):

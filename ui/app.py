@@ -4,7 +4,7 @@ from textual.containers import Vertical
 from textual.coordinate import Coordinate
 from textual.screen import Screen
 from textual.widgets import DataTable, Footer, Header, Label, ListItem, ListView, Button, Static
-from player.player import DeviceInfo, HandcraftedAudioPlayer
+from core.player import DeviceInfo, HandcraftedAudioPlayer
 from ui.controls import CurrentTrackWidget
 
 class DeviceItem(ListItem):

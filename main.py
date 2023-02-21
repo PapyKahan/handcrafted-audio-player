@@ -4,10 +4,10 @@ import os
 from numpy import random
 import sounddevice
 import asyncio
-from player import OutputDevice
+from core import OutputDevice
 from tinytag import TinyTag
-from player.device import DeviceInfo, HostApiInfo
-from player.player import TrackInfo
+from core.device import DeviceInfo, HostApiInfo
+from core.player import TrackInfo
 from ui import HandcraftedAudioPlayerApp
 
 parser = argparse.ArgumentParser(add_help=False)

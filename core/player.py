@@ -2,7 +2,7 @@ import asyncio
 import sounddevice
 import os
 from tinytag import TinyTag
-from player.device import OutputDevice, DeviceInfo, HostApiInfo
+from core.device import OutputDevice, DeviceInfo, HostApiInfo
 
 class TrackInfo():
     path : str
