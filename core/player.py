@@ -29,6 +29,7 @@ class HandcraftedAudioPlayer():
         self.__current_track_index : int = 0
         self.__playback_stoped : bool = True
         self.__playback_paused : bool = True
+        self.__repeat_playlist : bool = False
         pass
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
@@ -122,6 +123,10 @@ class HandcraftedAudioPlayer():
     def is_stoped(self) -> bool:
         return self.__playback_stoped
 
+    @property
+    def is_repeat_enabled(self) -> bool:
+        return self.__repeat_playlist
+
     def resume(self):
         if self.__output_device:
             self.__output_device.resume()
@@ -140,7 +145,8 @@ class HandcraftedAudioPlayer():
     def __increase_current_index(self):
         if self.__current_playlist:
             if self.__current_track_index == len(self.__current_playlist)-1:
-                self.__current_track_index=0
+                if self.__repeat_playlist == True:
+                    self.__current_track_index=0
             else:
                 self.__current_track_index+= 1
     
@@ -151,7 +157,8 @@ class HandcraftedAudioPlayer():
     def __decrease_current_index(self):
         if self.__current_playlist:
             if self.__current_track_index == 0:
-                self.__current_track_index = len(self.__current_playlist)-1
+                if self.__repeat_playlist == True:
+                    self.__current_track_index = len(self.__current_playlist)-1
             else:
                 self.__current_track_index -= 1
 
@@ -159,7 +166,7 @@ class HandcraftedAudioPlayer():
         self.__decrease_current_index()
         await self.play()
 
-    def randomize(self):
+    def shuffle(self):
         if self.__current_playlist:
             current_file = self.__current_playlist[self.__current_track_index]
             random.shuffle(self.__current_playlist)
@@ -172,4 +179,6 @@ class HandcraftedAudioPlayer():
             for event in self.__on_playlist_changed:
                 event()
 
+    def repeat(self):
+        self.__repeat_playlist = not self.__repeat_playlist
 

@@ -40,7 +40,21 @@ class TrackControls(Static):
     .hidden {
         display: none;
     }
+
+    .toggled {
+        background: grey;
+    }
     """
+
+    #BINDINGS = [
+    #    ("h", "previous_track", "Previous"),
+    #    ("l", "previous_track", "Next"),
+    #    ("p", "play_track", "Play"),
+    #    ("p", "pause_track", "Pause"),
+    #    ("t", "stop_track", "Stop"),
+    #    ("s", "shuffle_playlist", "Shuffle"),
+    #    ("r", "repeat_playlist", "Repeat"),
+    #]
 
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
@@ -52,7 +66,7 @@ class TrackControls(Static):
         yield Button("", id="pause_track", classes="hidden")
         yield Button("", id="stop_track", disabled=True)
         yield Button("怜", id="next_track")
-        yield Button("", id="random_queue")
+        yield Button("", id="shuffle_queue")
 
     def __on_track_changed(self, *_):
         self.query_one("#stop_track").disabled = False
@@ -65,34 +79,58 @@ class TrackControls(Static):
     def on_mount(self) -> None:
         self.app.player.on_track_changed.append(self.__on_track_changed)
 
+    def action_previous_track(self):
+        asyncio.create_task(self.app.player.previous())
+
+    def action_next_track(self):
+        asyncio.create_task(self.app.player.next())
+
+    async def action_play_track(self):
+        if self.app.player.is_playing == False:
+            if not self.app.player.current_device:
+                self.app.action_select_output_device()
+            else:
+                await self.app.player.play()
+        else:
+            self.app.player.resume()
+            self.query_one("#pause_track").toggle_class("hidden")
+            self.query_one("#play_track").toggle_class("hidden")
+
+    def action_pause_track(self):
+        self.app.player.pause()
+        self.query_one("#pause_track").toggle_class("hidden")
+        self.query_one("#play_track").toggle_class("hidden")
+
+    def action_stop_track(self):
+        self.app.player.stop()
+        self.query_one("#pause_track").toggle_class("hidden")
+        self.query_one("#play_track").toggle_class("hidden")
+        self.query_one("#stop_track").disabled = True
+
+    def action_shuffle_playlist(self):
+        self.app.player.shuffle()
+
+    def action_repeat(self):
+        self.app.player.repeat()
+        self.query_one("#repeat_queue").toggle_class("toggled")
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when a button is pressed."""
         button = event.button
         if button.id == "play_track":
-            if self.app.player.is_playing == False:
-                if not self.app.player.current_device:
-                    self.app.action_select_output_device()
-                else:
-                    await self.app.player.play()
-            else:
-                self.app.player.resume()
-                self.query_one("#pause_track").toggle_class("hidden")
-                self.query_one("#play_track").toggle_class("hidden")
+            await self.action_play_track()
         elif button.id == "pause_track":
-            self.app.player.pause()
-            self.query_one("#pause_track").toggle_class("hidden")
-            self.query_one("#play_track").toggle_class("hidden")
+            self.action_pause_track()
         elif button.id == "stop_track":
-            self.app.player.stop()
-            self.query_one("#pause_track").toggle_class("hidden")
-            self.query_one("#play_track").toggle_class("hidden")
-            button.disabled = True
+            self.action_stop_track()
         elif button.id == "previous_track":
-            asyncio.create_task(self.app.player.previous())
+            self.action_previous_track()
         elif button.id == "next_track":
-            asyncio.create_task(self.app.player.next())
-        elif button.id == "random_queue":
-            self.app.player.randomize()
+            self.action_next_track()
+        elif button.id == "shuffle_queue":
+            self.action_shuffle_playlist()
+        elif button.id == "repeat_queue":
+            self.action_repeat()
 
 class TrackTimeColumn(TextColumn):
     def __init__(self, *args, **kwargs):
