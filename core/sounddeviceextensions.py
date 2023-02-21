@@ -1,6 +1,6 @@
 import sounddevice as sd
 
-class ExWasapiSettings:
+class ExWasapiSettings(sd.WasapiSettings):
     def __init__(self, exclusive=False, polling=False, thread_priority=False):
         flags = 0x0
         if exclusive:
