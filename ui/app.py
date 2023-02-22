@@ -150,9 +150,8 @@ class HandcraftedAudioPlayerApp(App):
         ("o", "select_output_device", "Select Output"),
     ]
 
-    def __init__(self, playlist : list, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.__player = HandcraftedAudioPlayer()
-        self.__player.set_playlist(playlist)
         self.__current_playlist_data_table: DataTable = DataTable(zebra_stripes=True)
         self.__current_playlist_data_table.cursor_type = "row" 
         self.__current_track_controls = CurrentTrackWidget(id="current_track_controls")

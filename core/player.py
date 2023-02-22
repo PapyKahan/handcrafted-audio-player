@@ -74,9 +74,6 @@ class HandcraftedAudioPlayer():
     def current_track_index(self) -> int :
         return self.__current_track_index
 
-    def set_playlist(self, playlist : list[TrackInfo] | None):
-       self.__current_playlist = playlist 
-
     async def play(self, index : int | None = None) -> None:
         if self.__output_device and self.__current_playlist:
             if index != None:
@@ -182,3 +179,23 @@ class HandcraftedAudioPlayer():
     def repeat(self):
         self.__repeat_playlist = not self.__repeat_playlist
 
+    def load_library(self, path : str):
+        if not self.__current_playlist:
+            self.__current_playlist = list[TrackInfo]()
+        self.__current_playlist.clear()
+        for root, _, files in os.walk(path):
+            for file in files:
+                if file.endswith(".flac"):
+                    filepath = os.path.join(root, file)
+                    tags = TinyTag.get(filepath)
+                    track_info = TrackInfo()
+                    track_info.path = filepath
+                    track_info.title = tags.title
+                    track_info.album = tags.album
+                    track_info.artist = tags.artist
+                    track_info.albumartist = tags.albumartist
+                    track_info.samplerate = tags.samplerate
+                    track_info.duration = tags.duration
+                    self.__current_playlist.append(track_info)
+        for event in self.__on_playlist_changed:
+            event()
