@@ -25,11 +25,13 @@ class HandcraftedAudioPlayer():
         self.__on_track_changed : list = list()
         self.__on_track_ended : list = list()
         self.__on_playlist_changed : list = list()
-        self.__current_playlist : list[TrackInfo] | None = None
+        self.__current_library : list[TrackInfo] | None = None
+        self.__current_playlist_queue : list[TrackInfo] | None = None
         self.__current_track_index : int = 0
         self.__playback_stoped : bool = True
         self.__playback_paused : bool = True
         self.__repeat_playlist : bool = False
+        self.__is_shuffle_enabled : bool = False
         pass
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
@@ -68,18 +70,18 @@ class HandcraftedAudioPlayer():
 
     @property
     def current_playlist(self) -> list[TrackInfo] | None:
-        return self.__current_playlist
+        return self.__current_playlist_queue
     
     @property
     def current_track_index(self) -> int :
         return self.__current_track_index
 
     async def play(self, index : int | None = None) -> None:
-        if self.__output_device and self.__current_playlist:
+        if self.__output_device and self.__current_playlist_queue:
             if index != None:
                 self.__current_track_index = index
 
-            track = self.__current_playlist[self.__current_track_index]
+            track = self.__current_playlist_queue[self.__current_track_index]
 
             playback_info = self.__output_device.play(track.path)
 
@@ -140,8 +142,8 @@ class HandcraftedAudioPlayer():
             self.__playback_stoped = True
 
     def __increase_current_index(self):
-        if self.__current_playlist:
-            if self.__current_track_index == len(self.__current_playlist)-1:
+        if self.__current_playlist_queue:
+            if self.__current_track_index == len(self.__current_playlist_queue)-1:
                 if self.__repeat_playlist == True:
                     self.__current_track_index=0
             else:
@@ -152,10 +154,10 @@ class HandcraftedAudioPlayer():
         await self.play()
 
     def __decrease_current_index(self):
-        if self.__current_playlist:
+        if self.__current_playlist_queue:
             if self.__current_track_index == 0:
                 if self.__repeat_playlist == True:
-                    self.__current_track_index = len(self.__current_playlist)-1
+                    self.__current_track_index = len(self.__current_playlist_queue)-1
             else:
                 self.__current_track_index -= 1
 
@@ -164,11 +166,14 @@ class HandcraftedAudioPlayer():
         await self.play()
 
     def shuffle(self):
-        if self.__current_playlist:
-            current_file = self.__current_playlist[self.__current_track_index]
-            random.shuffle(self.__current_playlist)
+        self.__is_shuffle_enabled = not self.__is_shuffle_enabled
+        if self.__current_playlist_queue and self.__current_library:
+            current_file = self.__current_playlist_queue[self.__current_track_index]
+            self.__current_playlist_queue = self.__current_library.copy()
+            if self.__is_shuffle_enabled == True:
+                random.shuffle(self.__current_playlist_queue)
             index = 0
-            for track in self.__current_playlist:
+            for track in self.__current_playlist_queue:
                 if track.path == current_file.path:
                     break
                 index += 1
@@ -180,9 +185,9 @@ class HandcraftedAudioPlayer():
         self.__repeat_playlist = not self.__repeat_playlist
 
     def load_library(self, path : str):
-        if not self.__current_playlist:
-            self.__current_playlist = list[TrackInfo]()
-        self.__current_playlist.clear()
+        if not self.__current_library:
+            self.__current_library = list[TrackInfo]()
+        self.__current_library.clear()
         for root, _, files in os.walk(path):
             for file in files:
                 if file.endswith(".flac"):
@@ -196,6 +201,7 @@ class HandcraftedAudioPlayer():
                     track_info.albumartist = tags.albumartist
                     track_info.samplerate = tags.samplerate
                     track_info.duration = tags.duration
-                    self.__current_playlist.append(track_info)
+                    self.__current_library.append(track_info)
+        self.__current_playlist_queue = self.__current_library.copy()
         for event in self.__on_playlist_changed:
             event()

@@ -123,7 +123,7 @@ class OutputDeviceConfiguration:
     def __initialize_extra_settings(self):
         self.extra_settings = None
         if self.__device_info.hostapi.name == "Windows WASAPI":
-            self.extra_settings = ExWasapiSettings(exclusive=True, thread_priority=True, polling=True) # WASAPI polling mode
+            self.extra_settings = ExWasapiSettings(exclusive=True, thread_priority=True, polling=True)
 
     def __get_max_playback_samplerate(self) -> int:
         sample_rates = [384000, 352800, 192000, 176400, 96000, 88200, 48000, 44100, 22050]

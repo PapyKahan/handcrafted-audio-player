@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import sounddevice
-from tinytag import TinyTag
-from core.player import TrackInfo
 from ui import HandcraftedAudioPlayerApp
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument(
     '-l', '--list-devices', action='store_true',
-    help='show list of audio devices and exit')
+    help='show list of audio devices and exit'
+)
 args, remaining = parser.parse_known_args()
 if args.list_devices:
     print(sounddevice.query_devices())
