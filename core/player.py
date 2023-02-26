@@ -11,6 +11,7 @@ class TrackInfo():
     album : str
     artist : str
     albumartist : str
+    elapsed : float = 0.0
     duration : float
     samplerate : int
     channels : int
@@ -82,13 +83,13 @@ class HandcraftedAudioPlayer():
                 self.__current_track_index = index
 
             track = self.__current_playlist_queue[self.__current_track_index]
-
             playback_info = self.__output_device.play(track.path)
 
             self.__playback_stoped = False
             track.channels = playback_info.channels
             track.bitdepth = playback_info.bitdepth
             track.filetype = playback_info.filetype
+            track.elapsed = 0.0
             self.__current_track_info = track
             for event in self.on_track_changed:
                 event(self.__current_track_info, self.__current_device_info)
@@ -99,6 +100,8 @@ class HandcraftedAudioPlayer():
     async def __wait_and_play_next(self):
         while self.is_playing == True:
             await asyncio.sleep(1)
+            if self.__current_track_info and self.__playback_paused == False:
+                self.__current_track_info.elapsed += 1
         if self.__playback_stoped == False:
             await self.next()
 

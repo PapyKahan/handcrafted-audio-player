@@ -2,6 +2,7 @@ import asyncio
 import time
 from rich.progress import BarColumn, Progress, Task, TextColumn, Text
 from textual.app import ComposeResult
+from textual.events import Timer
 from textual.widgets import Label, Static, Button
 from core.player import DeviceInfo, TrackInfo
 
@@ -132,19 +133,28 @@ class TrackControls(Static):
         elif button.id == "repeat_queue":
             self.action_repeat()
 
-class TrackTimeColumn(TextColumn):
+class TrackElapsedTimeColumn(TextColumn):
     def __init__(self, *args, **kwargs):
         return super().__init__("", *args, **kwargs)    
 
     def render(self, task: Task) -> Text:
         if task.description == "dummy":
             return Text("--:--")
-        elif task.description == "play":
+        elif task.description == "elapsed":
+            t = time.gmtime(task.completed)
+            return Text(time.strftime("%M:%S", t))
+        return Text("--:--")
+
+class TrackTotalTimeColumn(TextColumn):
+    def __init__(self, *args, **kwargs):
+        return super().__init__("", *args, **kwargs)    
+
+    def render(self, task: Task) -> Text:
+        if task.description == "dummy":
+            return Text("--:--")
+        else:
             t = time.gmtime(task.total)
             return Text(time.strftime("%M:%S", t))
-        elif task.description == "elapsed":
-            return Text("--:--")
-        return Text("--:--")
 
 
 class TrackProgressBar(Static):
@@ -157,22 +167,32 @@ class TrackProgressBar(Static):
     }
     """
     def __init__(self, *args, **kwargs):
-        self.start_column = TrackTimeColumn()
-        self.bar = BarColumn()
-        self.end_column = TrackTimeColumn()
-        self.progress_bar = Progress(self.start_column, self.bar, self.end_column)
-        self.task_id = self.progress_bar.add_task("dummy")
-        return super().__init__(*args, **kwargs)
-
-    def on_mount(self):
+        super().__init__(*args, **kwargs)
+        self.__elapsed_column = TrackElapsedTimeColumn()
+        self.__bar = BarColumn()
+        self.__total_column = TrackTotalTimeColumn()
+        self.__progress_bar = Progress(self.__elapsed_column, self.__bar, self.__total_column)
+        self.__task_id = self.__progress_bar.add_task("dummy")
         self.app.player.on_track_changed.append(self.__on_track_changed)
+        self.__current_track_timer : Timer | None = None
 
-    def __on_track_changed(self, *_):
-        if self.app.player.current_track:
-            self.progress_bar.add_task("play", total=self.app.player.current_track.duration)
+    def __on_track_changed(self, current_track : TrackInfo, *_):
+        self.__current_track = current_track
+        if self.__current_track_timer:
+            self.__current_track_timer.stop_no_wait()
+        self.__progress_bar.update(self.__task_id, description="play", total=self.__current_track.duration, completed=0)
+        self.__current_track_timer = self.set_interval(1/60, self.__update_progress_bar, pause=True)
+        self.__current_track_timer.resume()
+        self.refresh(repaint=True)
+
+    def __update_progress_bar(self):
+        self.__progress_bar.update(task_id=self.__task_id, description="elapsed", total=self.__current_track.duration, completed=self.__current_track.elapsed)
+        self.refresh(repaint=True)
 
     def render(self):
-        return self.progress_bar
+        return self.__progress_bar
+    
+
 
 class CurrentTrackWidget(Static):
     DEFAULT_CSS = """
