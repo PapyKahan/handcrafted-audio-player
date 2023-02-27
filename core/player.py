@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.tasks import Task
 import sounddevice
 import os
 from tinytag import TinyTag
@@ -33,7 +34,7 @@ class HandcraftedAudioPlayer():
         self.__playback_paused : bool = True
         self.__repeat_playlist : bool = False
         self.__is_shuffle_enabled : bool = False
-        pass
+        self.__play_next_task : Task | None = None
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
         host_apis = list[HostApiInfo]()
@@ -78,6 +79,9 @@ class HandcraftedAudioPlayer():
         return self.__current_track_index
 
     async def play(self, index : int | None = None) -> None:
+        if self.__play_next_task:
+            self.__play_next_task.cancel()
+
         if self.__output_device and self.__current_playlist_queue:
             if index != None:
                 self.__current_track_index = index
@@ -93,7 +97,7 @@ class HandcraftedAudioPlayer():
             self.__current_track_info = track
             for event in self.on_track_changed:
                 event(self.__current_track_info, self.__current_device_info)
-            asyncio.create_task(self.__wait_and_play_next())
+            self.__play_next_task = asyncio.create_task(self.__wait_and_play_next())
             self.__playback_stoped = False
             self.__playback_paused = False
 
