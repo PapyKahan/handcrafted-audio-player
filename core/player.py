@@ -33,7 +33,7 @@ class HandcraftedAudioPlayer():
         self.__playback_stoped : bool = True
         self.__playback_paused : bool = True
         self.__repeat_playlist : bool = False
-        self.__is_shuffle_enabled : bool = False
+        self.__is_playlist_queue_shuffled : bool = False
         self.__play_next_task : Task | None = None
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
@@ -173,11 +173,11 @@ class HandcraftedAudioPlayer():
         await self.play()
 
     def shuffle(self):
-        self.__is_shuffle_enabled = not self.__is_shuffle_enabled
+        self.__is_playlist_queue_shuffled = not self.__is_playlist_queue_shuffled
         if self.__current_playlist_queue and self.__current_library:
             current_file = self.__current_playlist_queue[self.__current_track_index]
             self.__current_playlist_queue = self.__current_library.copy()
-            if self.__is_shuffle_enabled == True:
+            if self.__is_playlist_queue_shuffled == True:
                 random.shuffle(self.__current_playlist_queue)
             index = 0
             for track in self.__current_playlist_queue:

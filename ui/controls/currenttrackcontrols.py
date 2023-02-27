@@ -110,6 +110,7 @@ class TrackControls(Static):
 
     def action_shuffle_playlist(self):
         self.app.player.shuffle()
+        self.query_one("#shuffle_queue").toggle_class("toggled")
 
     def action_repeat(self):
         self.app.player.repeat()
