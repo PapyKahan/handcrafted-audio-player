@@ -25,10 +25,6 @@ class DeviceItem(ListItem):
     #device_info_name {
         width: 100%;
     }
-
-    .selected {
-        background: gray;
-    }
     """
 
     device : DeviceInfo
@@ -76,7 +72,6 @@ class SelectOutputDeviceDialog(Static):
     def __init__(self, *args, **kwargs):
         self.__selected_device = None
         self.__output_device_list_view : ListView
-        self.__previously_selected_item : ListItem | None = None
         return super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
@@ -100,26 +95,18 @@ class SelectOutputDeviceDialog(Static):
 
     def on_list_view_selected(self, selected: ListView.Selected) -> None:
         self.__selected_device = selected.item.device
-        if self.__previously_selected_item:
-            self.__previously_selected_item.remove_class("selected")
-        selected.item.add_class("selected")
-        self.__previously_selected_item = selected.item
 
     def on_mount(self) -> None:
         apis = self.app.player.get_outout_device_list_by_api()
-        list_view = self.query_one("#select_output_device_list")
+        self.__output_device_list_view.clear()
         for api in apis:
             for device in api.devices:
                 item = DeviceItem(device)
-                list_view.append(item)
+                self.__output_device_list_view.append(item)
                 player : HandcraftedAudioPlayer = self.app.player
                 if player.current_device:
                     if player.current_device.index == device.index:
-                        item.add_class("selected")
-                        item.highlighted = True
-                    else:
-                        item.highlighted = False
-                    self.__previously_selected_item = item
+                        self.__output_device_list_view.index = len(self.__output_device_list_view.children) - 1
 
 
 class SelectOutputDeviceScreen(Screen):
