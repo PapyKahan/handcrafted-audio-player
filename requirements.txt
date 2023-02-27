@@ -17,6 +17,7 @@ numpy==1.24.2
 packaging==23.0
 pycparser==2.21
 Pygments==2.14.0
+PyTermGUI==7.3.0
 python-dateutil==2.8.2
 PyYAML==6.0
 pyyaml_env_tag==0.1
@@ -25,7 +26,7 @@ six==1.16.0
 sounddevice==0.4.6
 soundfile==0.12.1
 soxr==0.3.3
-textual==0.11.1
+textual==0.12.1
 tinytag==1.8.1
 typing_extensions==4.5.0
 uc-micro-py==1.0.1
