@@ -35,6 +35,7 @@ class HandcraftedAudioPlayer():
         self.__repeat_playlist : bool = False
         self.__is_playlist_queue_shuffled : bool = False
         self.__play_next_task : Task | None = None
+        
 
     def get_outout_device_list_by_api(self) -> list[HostApiInfo]:
         host_apis = list[HostApiInfo]()

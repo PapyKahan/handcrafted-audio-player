@@ -72,7 +72,6 @@ def get_files_into_directory(path: str) -> list:
                 filelist.append(track_info)
     return filelist
 
-
 device = find_output_device('WASAPI', 'Cayin RU6')
 #device = find_output_device('DirectSound', 'Cayin RU6')
 #device = find_output_device('WASAPI', 'DETHONRAY Honey H1')
