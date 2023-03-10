@@ -26,7 +26,7 @@ six==1.16.0
 sounddevice==0.4.6
 soundfile==0.12.1
 soxr==0.3.4
-textual==0.13.0
+textual==0.14.0
 tinytag==1.8.1
 typing_extensions==4.5.0
 uc-micro-py==1.0.1

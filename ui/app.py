@@ -6,9 +6,14 @@ from textual.widgets import DataTable, Footer, Header
 from core.player import HandcraftedAudioPlayer
 from ui.controls import CurrentTrackWidget
 from ui.selectoutputdevicescreen import SelectOutputDeviceScreen
+from ui.settings import SettingsScreen
+
 
 class HandcraftedAudioPlayerApp(App):
-    SCREENS = {"select_output_device": SelectOutputDeviceScreen()}
+    SCREENS = {
+        "select_output_device": SelectOutputDeviceScreen(),
+        "settings": SettingsScreen(),
+    }
     DEFAULT_CSS = """
     #current_track_controls {
         dock: bottom;
@@ -19,6 +24,7 @@ class HandcraftedAudioPlayerApp(App):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("o", "select_output_device", "Select Output"),
+        ("s", "settings", "Settings"),
     ]
 
     def __init__(self, *args, **kwargs):
@@ -42,8 +48,14 @@ class HandcraftedAudioPlayerApp(App):
         return self.__player
     
     def action_select_output_device(self):
-        if self.screen.id != "select_output_device_screen":
-            self.push_screen(SelectOutputDeviceScreen(id="select_output_device_screen"))
+        if len(self.screen_stack) > 1:
+            self.pop_screen()
+        self.push_screen(SelectOutputDeviceScreen(id="select_output_device_screen"))
+
+    def action_settings(self):
+        if len(self.screen_stack) > 1:
+            self.pop_screen()
+        self.push_screen(SettingsScreen(id="settings"))
 
     async def on_data_table_row_selected(self, selected_row : DataTable.RowSelected) -> None:
         if not self.__player.current_device:
