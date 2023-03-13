@@ -1,6 +1,7 @@
 import asyncio
 import time
-from rich.progress import BarColumn, Progress, Task, TextColumn, Text
+from rich.progress import BarColumn, Progress, Task, TextColumn
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.events import Timer
 from textual.widgets import Label, Static, Button
@@ -180,7 +181,7 @@ class TrackProgressBar(Static):
     def __on_track_changed(self, current_track : TrackInfo, *_):
         self.__current_track = current_track
         if self.__current_track_timer:
-            self.__current_track_timer.stop_no_wait()
+            self.__current_track_timer.stop()
         self.__progress_bar.update(self.__task_id, description="play", total=self.__current_track.duration, completed=0)
         self.__current_track_timer = self.set_interval(1/60, self.__update_progress_bar, pause=True)
         self.__current_track_timer.resume()

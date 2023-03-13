@@ -72,10 +72,10 @@ def get_files_into_directory(path: str) -> list:
                 filelist.append(track_info)
     return filelist
 
-device = find_output_device('WASAPI', 'Cayin RU6')
+#device = find_output_device('WASAPI', 'Cayin RU6')
 #device = find_output_device('DirectSound', 'Cayin RU6')
 #device = find_output_device('WASAPI', 'DETHONRAY Honey H1')
-#device = find_output_device('DirectSound', 'Qudelix-5K USB DAC')
+device = find_output_device('WASAPI', 'Qudelix-5K USB DAC')
 #deviceid = find_output_device('WASAPI', 'Realtek High Definition Audio(SST)')
 
 if not device:

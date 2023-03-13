@@ -5,13 +5,11 @@ from textual.coordinate import Coordinate
 from textual.widgets import DataTable, Footer, Header
 from core.player import HandcraftedAudioPlayer
 from ui.controls import CurrentTrackWidget
-from ui.selectoutputdevicescreen import SelectOutputDeviceScreen
 from ui.settings import SettingsScreen
 
 
 class HandcraftedAudioPlayerApp(App):
     SCREENS = {
-        "select_output_device": SelectOutputDeviceScreen(),
         "settings": SettingsScreen(),
     }
     DEFAULT_CSS = """
@@ -23,7 +21,6 @@ class HandcraftedAudioPlayerApp(App):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
-        ("o", "select_output_device", "Select Output"),
         ("s", "settings", "Settings"),
     ]
 
@@ -47,11 +44,6 @@ class HandcraftedAudioPlayerApp(App):
     def player(self) -> HandcraftedAudioPlayer:
         return self.__player
     
-    def action_select_output_device(self):
-        if len(self.screen_stack) > 1:
-            self.pop_screen()
-        self.push_screen(SelectOutputDeviceScreen(id="select_output_device_screen"))
-
     def action_settings(self):
         if len(self.screen_stack) > 1:
             self.pop_screen()
@@ -59,7 +51,7 @@ class HandcraftedAudioPlayerApp(App):
 
     async def on_data_table_row_selected(self, selected_row : DataTable.RowSelected) -> None:
         if not self.__player.current_device:
-            self.action_select_output_device()
+            self.action_settings()
         else:
             await self.__player.play(selected_row.cursor_row)
 

@@ -10,7 +10,9 @@ from core.sounddeviceextensions import ExWasapiSettings
 
 class HostApiInfo():
     def __init__(self, hostapi_info: Any | dict[str, Any]):
+        print(hostapi_info)
         self.__name = hostapi_info['name']
+        self.__index = self.__name.replace(" ", "_").lower()
         self.__devices = list[DeviceInfo]()
         self.__default_output_device = None
         for device_id in hostapi_info['devices']:
@@ -25,8 +27,12 @@ class HostApiInfo():
         return f"Host: {self.__name}, default output device: [{self.default_output_device}]"
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__name
+
+    @property
+    def index(self) -> str:
+        return self.__index
 
     @property
     def devices(self):
