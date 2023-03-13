@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, ContentSwitcher, Footer, Header, Label, Markdown, RadioButton, RadioSet, Static
+from textual.widgets import Button, ContentSwitcher, Footer, Header, Markdown, RadioButton, RadioSet, Static
 from textual.screen import Screen
 from core.device import DeviceInfo, HostApiInfo
 from core.player import HandcraftedAudioPlayer
@@ -20,13 +20,16 @@ class DeviceRadioButton(RadioButton):
         else:
             return super().__init__(id="device_" + str(device.index), label=device.name, button_first=True, *args, **kwargs)
 
-
-
 class DeviceSettingsPage(Static):
     DEFAULT_CSS="""
     DeviceSettingsPage {
         content-align: center middle;
         height: 100%;
+    }
+
+    #device-selection-group {
+        width: 100%;
+        height: auto;
     }
     """
 
@@ -48,11 +51,11 @@ class DeviceSettingsPage(Static):
     
     def compose(self) -> ComposeResult:
         with Vertical():
-            with Horizontal():
+            with Horizontal(id="device-selection-group"):
                 yield self.__api_list_radio_set
                 yield self.__content_switcher
-            with Horizontal():
-                with ContentSwitcher(id="api-specific-settings"):
+            with Horizontal(id="device-settings-group"):
+                with ContentSwitcher(id="api-specific-settings", initial="no-device-selected"):
                     yield Markdown(markdown="No device selected", id="no-device-selected")
     
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
@@ -79,16 +82,20 @@ class SettingsScreen(Screen):
     }
 
     #buttons {
-        margin-top: 1;
-        height: 3;
+        margin-bottom: 1;
+        height: auto;
         width: auto;
     }
     
     #content-switcher {
         background: $panel;
         border: round $primary;
-        width: 90%;
-        height: 80%;
+        width: 100%;
+    }
+
+    #footer-buttons {
+        margin-top: 1;
+        height: auto;
     }
     """
     def __init__(self, *args, **kwargs):
@@ -96,15 +103,16 @@ class SettingsScreen(Screen):
     
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Horizontal(id="buttons"):  
-            yield Button("Output device", id="device-settings")  
-            yield Button("General", id="markdown")  
-        with ContentSwitcher(initial="device-settings", id="content-switcher"):
-            yield DeviceSettingsPage(id="device-settings")
-            yield Markdown(id="markdown")
-        with Horizontal():
-            yield Button("Save", id="save")
-            yield Button("Cancel", id="cancel")
+        with Vertical(id="settings-main"):
+            with Horizontal(id="buttons"):  
+                yield Button("Output device", id="device-settings")  
+                yield Button("General", id="markdown")  
+            with ContentSwitcher(initial="device-settings", id="content-switcher"):
+                yield DeviceSettingsPage(id="device-settings")
+                yield Markdown(id="markdown")
+            with Horizontal(id="footer-buttons"):
+                yield Button("Save", id="save")
+                yield Button("Cancel", id="cancel")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
