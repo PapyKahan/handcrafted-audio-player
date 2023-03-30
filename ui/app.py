@@ -1,6 +1,6 @@
 import time
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.coordinate import Coordinate
 from textual.widgets import DataTable, Footer, Header
 from core.player import HandcraftedAudioPlayer
@@ -13,10 +13,16 @@ class HandcraftedAudioPlayerApp(App):
         "settings": SettingsScreen(),
     }
     DEFAULT_CSS = """
+
+    #current_playlist_data_table {
+        height: 100%;
+    }
+
     #current_track_controls {
         dock: bottom;
         margin: 0 0 2 0
     }
+
     """
 
     BINDINGS = [
@@ -26,7 +32,7 @@ class HandcraftedAudioPlayerApp(App):
 
     def __init__(self, *args, **kwargs):
         self.__player = HandcraftedAudioPlayer()
-        self.__current_playlist_data_table: DataTable = DataTable(zebra_stripes=True)
+        self.__current_playlist_data_table: DataTable = DataTable(zebra_stripes=True, id="current_playlist_data_table")
         self.__current_playlist_data_table.cursor_type = "row" 
         self.__current_track_controls = CurrentTrackWidget(id="current_track_controls")
         self.__previous_track_index : int = 0
@@ -36,7 +42,7 @@ class HandcraftedAudioPlayerApp(App):
         yield Header(show_clock=True)
         yield Vertical(
             self.__current_playlist_data_table,
-            self.__current_track_controls
+            self.__current_track_controls,
         )
         yield Footer()
 
