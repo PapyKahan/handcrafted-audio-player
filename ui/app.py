@@ -21,7 +21,7 @@ class HandcraftedAudioPlayerApp(App):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
-        ("s", "settings", "Settings"),
+        ("ctrl+s", "settings", "Settings"),
     ]
 
     def __init__(self, *args, **kwargs):

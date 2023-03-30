@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, ContentSwitcher, Footer, Header, Markdown, RadioButton, RadioSet, Static
 from textual.screen import Screen
 from core.device import DeviceInfo, HostApiInfo
@@ -103,7 +103,7 @@ class SettingsScreen(Screen):
     
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="settings-main"):
+        with VerticalScroll(id="settings-main"):
             with Horizontal(id="buttons"):  
                 yield Button("Output device", id="device-settings")  
                 yield Button("General", id="markdown")  
